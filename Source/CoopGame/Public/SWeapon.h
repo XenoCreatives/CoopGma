@@ -24,6 +24,7 @@ public:
 
 protected:
 
+	virtual void BeginPlay() override;
 
 	// Called when the game starts or when spawned
 	
@@ -57,11 +58,30 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 	TSubclassOf<UCameraShake> FireCamShake;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	float BaseDamage;
+
+	void Fire();
+
+	FTimerHandle TimerHandle_TimeBetweenShots;
+
+	float LastFiredTime;
+
+	/* RPM - BUllets per minute fired by weapon */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	float RateOfFire;
+
+	//Derived from RateOfFire
+	float TimeBetweenShots;
+
 
 public:
 
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-	/*virtual*/ void Fire();
+
+
+	void StartFire();
+
+	void StopFire();
 
 	
 	
