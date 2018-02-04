@@ -12,6 +12,7 @@
 
 
 
+
 static int32 DebugWeaponDrawing = 0;
 FAutoConsoleVariableRef CVARDebugWeaponDrawing (TEXT("COOP.DebugWeapons"), DebugWeaponDrawing, TEXT("Draw Debug Lines for Weapons"), ECVF_Cheat);
 
@@ -29,6 +30,8 @@ ASWeapon::ASWeapon()
 	BaseDamage = 20.0f;
 
 	RateOfFire = 600;
+
+	SetReplicates(true);
 }
 
 
@@ -42,6 +45,11 @@ void ASWeapon::BeginPlay()
 void ASWeapon::Fire()
 {
 	// Trace the world, from pawn eyes to crosshair location
+
+	if (Role < ROLE_Authority)
+	{
+		ServerFire();
+	}
 
 	
 	AActor* MyOwner = GetOwner();
@@ -118,6 +126,19 @@ void ASWeapon::Fire()
 	}
 
 	
+}
+
+
+
+
+void ASWeapon::ServerFire_Implementation()
+{
+	Fire();
+}
+
+bool ASWeapon::ServerFire_Validate()
+{
+	return true;
 }
 
 void ASWeapon::StartFire()
