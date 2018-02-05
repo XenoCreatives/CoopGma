@@ -42,6 +42,22 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "TracerBot")
 	float RequiredDistanceToTarget;
 
+	//Dynamic material to pulse on damage
+	UMaterialInstanceDynamic* MatInst;
+
+	void SelfDestruct();
+	
+	UPROPERTY(EditDefaultsOnly, Category = "TracerBot")
+	UParticleSystem* ExplosionEffect;
+
+	bool bExploded;
+
+	UPROPERTY(EditDefaultsOnly, Category = "TracerBot")
+	float ExplosionRadius;
+
+	UPROPERTY(EditDefaultsOnly, Category = "TracerBot")
+	float ExplosionDamage;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
