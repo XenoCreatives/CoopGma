@@ -19,6 +19,7 @@ ASExplosiveBarrel::ASExplosiveBarrel()
 	HealthComp->OnHealthChanged.AddDynamic(this, &ASExplosiveBarrel::OnHealthChanged);
 
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
+	MeshComp->SetCanEverAffectNavigation(false);
 	MeshComp->SetSimulatePhysics(true);
 	//Set to physics body to let radial component affect us
 	MeshComp->SetCollisionObjectType(ECC_PhysicsBody);
