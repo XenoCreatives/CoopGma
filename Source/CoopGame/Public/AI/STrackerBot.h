@@ -8,6 +8,8 @@
 
 class USHealthComponent;
 class USphereComponent;
+class USoundCue;
+
 UCLASS()
 class COOPGAME_API ASTrackerBot : public APawn
 {
@@ -64,9 +66,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "TracerBot")
 	float ExplosionDamage;
 
+	UPROPERTY(EditDefaultsOnly, Category = "TracerBot")
+	float SelfDamageInterval;
+
 	FTimerHandle TimerHandle_SelfDamage;
 
 	void DamageSelf();
+
+	UPROPERTY(EditDefaultsOnly, Category = "TracerBot")
+	USoundCue* SelfDestructSound;
+
+	UPROPERTY(EditDefaultsOnly, Category = "TracerBot")
+	USoundCue* ExplodeSound;
 
 	
 
