@@ -1,5 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+
 #include "STrackerBot.h"
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -11,6 +12,7 @@
 #include "SCharacter.h"
 #include "Components/SphereComponent.h"
 #include "Sound/SoundCue.h"
+#include "TimerManager.h"
 
 
 // Sets default values
@@ -55,6 +57,10 @@ void ASTrackerBot::BeginPlay()
 		// Find initial move to
 		NextPathPoint = GetNextPathPoint();
 	}
+
+	//Every second we update our power-level based on nearby bots
+	FTimerHandle TimerHandle_CheckPowerLevel;
+	GetWorldTimerManager().SetTimer(TimerHandle_CheckPowerLevel, this, &ASTrackerBot::OnCheckNearbyBots, 1.0f, true);
 	
 	
 }
@@ -64,18 +70,19 @@ void ASTrackerBot::BeginPlay()
 void ASTrackerBot::HandleTakeDamage(USHealthComponent* OwningHealthComp, float Health, float HealthDelta, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
 {
 	
-
 	if (MatInst == nullptr)
 	{
 		MatInst = MeshComp->CreateAndSetMaterialInstanceDynamicFromMaterial(0, MeshComp->GetMaterial(0));
-
 	}
+
+	
 	
 	if (MatInst)
 	{
 		MatInst->SetScalarParameterValue("LastTimeDamageTaken", GetWorld()->TimeSeconds);
+		
 	}
-	
+
 	UE_LOG(LogTemp, Log, TEXT("Health %s of %s"), *FString::SanitizeFloat(Health), *GetName());
 
 	// Explode on Hitpoints == 0
@@ -125,6 +132,9 @@ void ASTrackerBot::SelfDestruct()
 	{
 		TArray<AActor*> IgnoredActors;
 		IgnoredActors.Add(this);
+
+		// Increase damage based on the powerlevel
+		float ActualDamage = ExplosionDamage + (ExplosionDamage * PowerLevel);
 
 		//Apply Damage
 		UGameplayStatics::ApplyRadialDamage(this, ExplosionDamage, GetActorLocation(), ExplosionRadius, nullptr, IgnoredActors, this, GetInstigatorController(), true);
@@ -200,5 +210,62 @@ void ASTrackerBot::NotifyActorBeginOverlap(AActor* OtherActor)
 			UGameplayStatics::SpawnSoundAttached(SelfDestructSound, RootComponent);
 		}
 	}
+}
+
+void ASTrackerBot::OnCheckNearbyBots()
+{
+	// distance to check for nearby bots
+	const float Radius = 600;
+
+	//Create temporary collision shape for overlaps
+	FCollisionShape CollShape;
+	CollShape.SetSphere(Radius);
+
+	//Only find Pawns(eg. players and AI bots)
+	FCollisionObjectQueryParams QueryParams;
+
+	//Our Tracker bot's mesh composnent is set to Physics Body in Blueprint(Default Profile of Physics simulated actors)
+	QueryParams.AddObjectTypesToQuery(ECC_PhysicsBody);
+	QueryParams.AddObjectTypesToQuery(ECC_Pawn);
+
+	TArray<FOverlapResult> Overlaps;
+	GetWorld()->OverlapMultiByObjectType(Overlaps, GetActorLocation(), FQuat::Identity, QueryParams, CollShape);
+
+	DrawDebugSphere(GetWorld(), GetActorLocation(), Radius, 12, FColor::White, false, 1.0f);
+
+	int32 NrOfBots = 0;
+	//loop over the results using a "range based for loop"
+	for (FOverlapResult Result : Overlaps)
+	{
+		// Check idnwe overlapped with another tracker bot (ignoring players and other bot types)
+		ASTrackerBot* Bot = Cast<ASTrackerBot>(Result.GetActor());
+		// Ignore this trackerbot instance
+		if (Bot && Bot != this)
+		{
+			NrOfBots++;
+		}
+	}
+
+	const int32 MaxPowerLevel = 4;
+
+	//Clamp between win=0 and max=4
+	PowerLevel = FMath::Clamp(NrOfBots, 0, MaxPowerLevel);
+
+	// Update the material color
+	if (MatInst == nullptr)
+	{
+		MatInst = MeshComp->CreateAndSetMaterialInstanceDynamicFromMaterial(0, MeshComp->GetMaterial(0));
+	}
+	if (MatInst)
+	{
+		float Alpha = PowerLevel / (float)MaxPowerLevel;
+
+		MatInst->SetScalarParameterValue("PowerLevelAlpha", Alpha);
+		
+	}
+
+	//Draw on the bot location
+	DrawDebugString(GetWorld(), FVector(0, 0, 0), FString::FromInt(PowerLevel), this, FColor::White, 1.0f, true);
+
 }
 

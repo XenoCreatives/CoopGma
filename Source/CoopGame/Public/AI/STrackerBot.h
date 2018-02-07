@@ -87,6 +87,14 @@ public:
 
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor);
 
+protected:
+
+	//find nearby enemies and grow in "power level" based on the amount
+	void OnCheckNearbyBots();
+
+	// The power boost of the bot, affects damaged caused to enemies and color of the bot
+	int32 PowerLevel;
+
 
 
 	
